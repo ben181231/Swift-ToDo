@@ -7,7 +7,6 @@
 //
 
 // TODO: 1. Re-order list
-// TODO: 2. Pull down to create item
 
 
 import UIKit
@@ -21,14 +20,17 @@ class ViewController: UIViewController {
     
     var fetchResultController : NSFetchedResultsController?
     var context : NSManagedObjectContext?
+    var refreshView: UIView?
     
-    let testingConstant = 4
+    var addItemAlertShown: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         if let appDelegate = UIApplication.sharedApplication().delegate as? AppDelegate {
             self.context = appDelegate.managedObjectContext
+            
+            self.setupRefreshControls()
             
             if let ctx = self.context {
                 let fetchRequest = NSFetchRequest(entityName: "TodoItem")
@@ -65,17 +67,26 @@ extension ViewController {
     }
     
     @IBAction func addButtonDidTap(sender: UIBarButtonItem) {
-        let alertView = UIAlertView(title: "New Item", message: "What to do ?", delegate: self,
-            cancelButtonTitle: "Cancel", otherButtonTitles: "Done")
-        alertView.alertViewStyle = .PlainTextInput
-        
-        alertView.show()
+        self.showAddItemAlert()
+    }
+    
+    func showAddItemAlert(){
+        if !self.addItemAlertShown {
+            self.addItemAlertShown = true
+            
+            let alertView = UIAlertView(title: "New Item", message: "What to do ?", delegate: self,
+                cancelButtonTitle: "Cancel", otherButtonTitles: "Done")
+            alertView.alertViewStyle = .PlainTextInput
+            alertView.show()
+        }
     }
 }
 
 // MARK: - UIAlertViewDelegate
 extension ViewController: UIAlertViewDelegate {
     func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        self.addItemAlertShown = false
+        
         if alertView.cancelButtonIndex != buttonIndex,
             let todoItemTitle = alertView.textFieldAtIndex(0)?.text?
                 .stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet()) {
@@ -217,3 +228,62 @@ extension ViewController : NSFetchedResultsControllerDelegate {
         println("Fetch Result Controller did changed content")
     }
 }
+
+// MARK: - Refresh Controls
+extension ViewController: UIScrollViewDelegate {
+    var refreshViewHeight: CGFloat { get { return 60 } }
+    
+    func setupRefreshControls() {
+        let fixHeight = self.refreshViewHeight
+        let refreshView = UIView(frame: CGRect(x: 0, y:0 , width: 320, height: fixHeight))
+        refreshView.backgroundColor = UIColor.clearColor()
+        refreshView.alpha = 0
+        
+        let refreshViewLabel = UILabel(frame: refreshView.bounds)
+        refreshViewLabel.text = "Pull down to create item"
+        refreshViewLabel.textColor = UIColor.lightGrayColor()
+        refreshViewLabel.textAlignment = .Center
+        refreshViewLabel.setTranslatesAutoresizingMaskIntoConstraints(false)
+
+        refreshView.addSubview(refreshViewLabel)
+        
+        let viewsDict = ["refreshViewLabel": refreshViewLabel]
+        refreshView.addConstraints(
+            NSLayoutConstraint.constraintsWithVisualFormat("V:|-10-[refreshViewLabel]-(>=0)-|",
+                options: nil, metrics: nil, views: viewsDict)
+        )
+        refreshView.addConstraints(
+            NSLayoutConstraint.constraintsWithVisualFormat("H:|-[refreshViewLabel]-|",
+                options: nil, metrics: nil, views: viewsDict)
+        )
+        refreshView.layoutIfNeeded()
+        
+        self.tableView.addSubview(refreshView)
+        self.refreshView = refreshView
+    }
+    
+    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        let offsetY = scrollView.contentOffset.y
+        let refreshViewHeight = self.refreshViewHeight
+        if offsetY + refreshViewHeight < 0 {
+            dispatch_async(dispatch_get_main_queue()) { [unowned weakSelf = self] () -> Void in
+                weakSelf.showAddItemAlert()
+            }
+        }
+    }
+    
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        
+        if offsetY <= 0, let refreshView = self.refreshView {
+            let refreshViewHeight = self.refreshViewHeight
+            refreshView.frame.origin.y = min(offsetY, -refreshViewHeight)
+            refreshView.frame.size.width = self.tableView.frame.width
+            refreshView.alpha = min(1, -offsetY / refreshViewHeight * 2)
+        }
+        else {
+            self.refreshView?.alpha = 0
+        }
+    }
+}
+
