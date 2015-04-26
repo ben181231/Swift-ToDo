@@ -15,6 +15,7 @@
 		E947A2B61AC70FC9003BCB26 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = E947A2B41AC70FC9003BCB26 /* LaunchScreen.xib */; };
 		E947A2C21AC70FC9003BCB26 /* SwiftTodoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E947A2C11AC70FC9003BCB26 /* SwiftTodoTests.swift */; };
 		E947A2D21AC71F39003BCB26 /* TodoItemTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E947A2D01AC71F39003BCB26 /* TodoItemTableViewCell.swift */; };
+		E9E4C4041AECBE08007D6A39 /* TodoItemObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9E4C4031AECBE08007D6A39 /* TodoItemObject.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,7 @@
 		E947A2C01AC70FC9003BCB26 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E947A2C11AC70FC9003BCB26 /* SwiftTodoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTodoTests.swift; sourceTree = "<group>"; };
 		E947A2D01AC71F39003BCB26 /* TodoItemTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoItemTableViewCell.swift; sourceTree = "<group>"; };
+		E9E4C4031AECBE08007D6A39 /* TodoItemObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoItemObject.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,7 +139,8 @@
 		E947A2CD1AC71E86003BCB26 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				E947A2AA1AC70FC9003BCB26 /* SwiftTodo.xcdatamodeld */,
+				E9E4C4021AECBD8C007D6A39 /* Core Data */,
+				E9E4C4031AECBE08007D6A39 /* TodoItemObject.swift */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -156,6 +159,14 @@
 				E947A2B21AC70FC9003BCB26 /* Images.xcassets */,
 			);
 			name = Assets;
+			sourceTree = "<group>";
+		};
+		E9E4C4021AECBD8C007D6A39 /* Core Data */ = {
+			isa = PBXGroup;
+			children = (
+				E947A2AA1AC70FC9003BCB26 /* SwiftTodo.xcdatamodeld */,
+			);
+			name = "Core Data";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -261,6 +272,7 @@
 				E947A2AE1AC70FC9003BCB26 /* ViewController.swift in Sources */,
 				E947A2A91AC70FC9003BCB26 /* AppDelegate.swift in Sources */,
 				E947A2D21AC71F39003BCB26 /* TodoItemTableViewCell.swift in Sources */,
+				E9E4C4041AECBE08007D6A39 /* TodoItemObject.swift in Sources */,
 				E947A2AC1AC70FC9003BCB26 /* SwiftTodo.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

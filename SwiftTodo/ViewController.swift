@@ -89,14 +89,18 @@ extension ViewController: UIAlertViewDelegate {
         
         if alertView.cancelButtonIndex != buttonIndex,
             let todoItemTitle = alertView.textFieldAtIndex(0)?.text?
-                .stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet()) {
+                .stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+        {
             println("New Item Title: \"\(todoItemTitle)\"")
-            if let ctx = self.context,
-                entity = NSEntityDescription.entityForName("TodoItem", inManagedObjectContext: ctx) {
-                let newItem = NSManagedObject(entity: entity, insertIntoManagedObjectContext: ctx)
-                newItem.setValue(todoItemTitle, forKey: "title")
-                newItem.setValue(false, forKey: "completed")
-                newItem.setValue(NSDate(), forKey: "createdAt")
+            
+            if let
+                ctx     = self.context,
+                entity  = TodoItemObject.entityDescription(inManagedObjectContext: ctx)
+            {
+                let newItem = TodoItemObject(entity: entity, insertIntoManagedObjectContext: ctx)
+                newItem.title = todoItemTitle
+                newItem.completed = false
+                newItem.createdAt = NSDate()
                 
                 var error : NSError?
                 if !ctx.save(&error) {
@@ -126,9 +130,8 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
         
         if indexPath.section == 0 {
-            let todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? NSManagedObject
-            if let completed = todoItem?.valueForKey("completed") as? Bool {
-                todoItem?.setValue(!completed, forKey: "completed")
+            if let todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? TodoItemObject {
+                todoItem.completed = !todoItem.completed
             }
         }
     }
@@ -149,7 +152,7 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
             
         case .Delete:
             style = "Delete"
-            if let todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? NSManagedObject,
+            if let todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? TodoItemObject,
                 ctx = self.context
             {
                 ctx.deleteObject(todoItem)
@@ -173,12 +176,12 @@ extension ViewController {
         var cell : UITableViewCell!
         
         if indexPath.section == 0 {
-            if let todoCell = tableView.dequeueReusableCellWithIdentifier("TodoItemCell") as? TodoItemTableViewCell,
-                todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? NSManagedObject {
-                todoCell.titleLabel.text = todoItem.valueForKey("title") as? String
-                if let completed = todoItem.valueForKey("completed") as? Bool {
-                    todoCell.doneLabel.hidden = !completed
-                }
+            if let
+                todoCell = tableView.dequeueReusableCellWithIdentifier("TodoItemCell") as? TodoItemTableViewCell,
+                todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? TodoItemObject
+            {
+                todoCell.titleLabel.text = todoItem.title
+                todoCell.doneLabel.hidden = !todoItem.completed
                 
                 cell = todoCell
             }
