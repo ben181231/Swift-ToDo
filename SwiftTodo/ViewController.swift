@@ -266,11 +266,13 @@ extension ViewController: UIScrollViewDelegate {
     }
     
     func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        let offsetY = scrollView.contentOffset.y
-        let refreshViewHeight = self.refreshViewHeight
-        if offsetY + refreshViewHeight < 0 {
-            dispatch_async(dispatch_get_main_queue()) { [unowned weakSelf = self] () -> Void in
-                weakSelf.showAddItemAlert()
+        if !self.tableView.editing {
+            let offsetY = scrollView.contentOffset.y
+            let refreshViewHeight = self.refreshViewHeight
+            if offsetY + refreshViewHeight < 0 {
+                dispatch_async(dispatch_get_main_queue()) { [unowned weakSelf = self] () -> Void in
+                    weakSelf.showAddItemAlert()
+                }
             }
         }
     }
@@ -278,7 +280,9 @@ extension ViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y
         
-        if offsetY <= 0, let refreshView = self.refreshView {
+        if offsetY <= 0 && !self.tableView.editing,
+            let refreshView = self.refreshView
+        {
             let refreshViewHeight = self.refreshViewHeight
             refreshView.frame.origin.y = min(offsetY, -refreshViewHeight)
             refreshView.frame.size.width = self.tableView.frame.width
