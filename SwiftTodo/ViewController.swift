@@ -58,6 +58,7 @@ extension ViewController {
     @IBAction func editButtonDidTap(sender: UIBarButtonItem) {
         if self.tableView.editing {
             self.tableView.setEditing(false, animated: true)
+            self.tableView.reloadData()
             sender.title = "Edit"
         }
         else {
@@ -168,6 +169,58 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
         
         println("Commit edit - \(style): \(indexPath.row)")
     }
+    
+    func tableView(tableView: UITableView, canMoveRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+        if let todoItem = self.fetchResultController?.objectAtIndexPath(indexPath) as? TodoItemObject {
+            return !todoItem.completed
+        }
+        return false
+    }
+    
+    func tableView(tableView: UITableView,
+        moveRowAtIndexPath sourceIndexPath: NSIndexPath,
+        toIndexPath destinationIndexPath: NSIndexPath)
+    {
+        // re-order the items by swapping create time
+        println("Moving Item #\(sourceIndexPath.row) to #\(destinationIndexPath.row)")
+        
+        let isMovingForward = destinationIndexPath.row > sourceIndexPath.row,
+            fromIdx         = min(sourceIndexPath.row, destinationIndexPath.row),
+            toIdx           = max(sourceIndexPath.row, destinationIndexPath.row)
+        
+        var objectArray: [TodoItemObject] = [], sortPropertyArray: [NSDate] = []
+        
+        for var idx = fromIdx; idx < toIdx + 1; idx++ {
+            if let movingItem = self.fetchResultController?.objectAtIndexPath(NSIndexPath(forRow: idx, inSection: 0)) as? TodoItemObject
+            {
+                if !movingItem.completed {
+                    objectArray.append(movingItem)
+                    sortPropertyArray.append(movingItem.createdAt)
+                }
+                else {
+                    break
+                }
+            }
+        }
+        
+        let arrayCount = count(objectArray)
+        if arrayCount > 1 {
+            if isMovingForward {
+                let tmpObject = objectArray.first
+                objectArray.removeAtIndex(0)
+                objectArray.append(tmpObject!)
+            }
+            else {
+                let tmpObject = objectArray.last
+                objectArray.removeLast()
+                objectArray.insert(tmpObject!, atIndex: 0)
+            }
+            
+            for var idx = 0; idx < arrayCount; idx++ {
+                objectArray[idx].createdAt = sortPropertyArray[idx]
+            }
+        }
+    }
 }
 
 // MARK: - Cell render helper
@@ -206,29 +259,29 @@ extension ViewController : NSFetchedResultsControllerDelegate {
         
         switch (type, indexPath, newIndexPath) {
         case let (.Insert, _,  indexToCreate) where newIndexPath != nil:
-            println("Cell update - Insert")
+            println("Cell update - Insert - \(indexToCreate!.row)")
             self.tableView.insertRowsAtIndexPaths([indexToCreate!], withRowAnimation: UITableViewRowAnimation.Fade)
             
         case let (.Move, indexFrom, indexTo) where indexPath != nil && newIndexPath != nil:
-            println("Cell update - Move")
-            self.tableView.moveRowAtIndexPath(indexFrom!, toIndexPath: indexTo!)
-            self.tableView.reloadRowsAtIndexPaths([indexTo!], withRowAnimation: .Fade)
+            println("Cell update - Move - \(indexFrom!.row) - \(indexTo!.row)")
+            if !self.tableView.editing{
+                self.tableView.moveRowAtIndexPath(indexFrom!, toIndexPath: indexTo!)
+                self.tableView.reloadRowsAtIndexPaths([indexTo!], withRowAnimation: .Fade)
+            }
             
         case let (.Update, indexToUpdate, _) where indexPath != nil:
-            println("Cell update - Update")
-            self.tableView.reloadRowsAtIndexPaths([indexToUpdate!], withRowAnimation: .Fade)
+            println("Cell update - Update - \(indexToUpdate!.row)")
+            if !self.tableView.editing {
+                self.tableView.reloadRowsAtIndexPaths([indexToUpdate!], withRowAnimation: .Fade)
+            }
             
         case let (.Delete, indexToDelete, _) where indexPath != nil:
-            println("Cell update - Delete")
+            println("Cell update - Delete - \(indexToDelete!.row)")
             self.tableView.deleteRowsAtIndexPaths([indexToDelete!], withRowAnimation: .Fade)
 
         default:
             println("Error: Fail to find a proper change")
         }
-    }
-    
-    func controllerDidChangeContent(controller: NSFetchedResultsController) {
-        println("Fetch Result Controller did changed content")
     }
 }
 
