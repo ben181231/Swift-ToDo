@@ -49,7 +49,10 @@ class ViewController: UIViewController {
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        self.fetchResultController?.performFetch(nil)
+        do {
+            try self.fetchResultController?.performFetch()
+        } catch _ {
+        }
     }
 }
 
@@ -92,7 +95,7 @@ extension ViewController: UIAlertViewDelegate {
             let todoItemTitle = alertView.textFieldAtIndex(0)?.text?
                 .stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
         {
-            println("New Item Title: \"\(todoItemTitle)\"")
+            print("New Item Title: \"\(todoItemTitle)\"")
             
             if let
                 ctx     = self.context,
@@ -104,8 +107,11 @@ extension ViewController: UIAlertViewDelegate {
                 newItem.createdAt = NSDate()
                 
                 var error : NSError?
-                if !ctx.save(&error) {
-                    println("Error on saving new item: \(error?.localizedDescription)")
+                do {
+                    try ctx.save()
+                } catch let error1 as NSError {
+                    error = error1
+                    print("Error on saving new item: \(error?.localizedDescription)")
                 }
             }
         }
@@ -158,8 +164,11 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
             {
                 ctx.deleteObject(todoItem)
                 var error : NSError?
-                if !ctx.save(&error) {
-                    println("Error on saving new item: \(error?.localizedDescription)")
+                do {
+                    try ctx.save()
+                } catch let error1 as NSError {
+                    error = error1
+                    print("Error on saving new item: \(error?.localizedDescription)")
                 }
             }
             
@@ -167,7 +176,7 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
             style = "None"
         }
         
-        println("Commit edit - \(style): \(indexPath.row)")
+        print("Commit edit - \(style): \(indexPath.row)")
     }
     
     func tableView(tableView: UITableView, canMoveRowAtIndexPath indexPath: NSIndexPath) -> Bool {
@@ -182,7 +191,7 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
         toIndexPath destinationIndexPath: NSIndexPath)
     {
         // re-order the items by swapping create time
-        println("Moving Item #\(sourceIndexPath.row) to #\(destinationIndexPath.row)")
+        print("Moving Item #\(sourceIndexPath.row) to #\(destinationIndexPath.row)")
         
         let isMovingForward = destinationIndexPath.row > sourceIndexPath.row,
             fromIdx         = min(sourceIndexPath.row, destinationIndexPath.row),
@@ -202,8 +211,8 @@ extension ViewController : UITableViewDelegate, UITableViewDataSource {
                 }
             }
         }
-        
-        let arrayCount = count(objectArray)
+
+        let arrayCount = objectArray.count
         if arrayCount > 1 {
             if isMovingForward {
                 let tmpObject = objectArray.first
@@ -252,35 +261,33 @@ extension ViewController {
 
 // MARK: - NSFetchedResultsControllerDelegate
 extension ViewController : NSFetchedResultsControllerDelegate {
-    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject,
-        atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType,
-        newIndexPath: NSIndexPath?)
+    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?)
     {
         
         switch (type, indexPath, newIndexPath) {
         case let (.Insert, _,  indexToCreate) where newIndexPath != nil:
-            println("Cell update - Insert - \(indexToCreate!.row)")
+            print("Cell update - Insert - \(indexToCreate!.row)")
             self.tableView.insertRowsAtIndexPaths([indexToCreate!], withRowAnimation: UITableViewRowAnimation.Fade)
             
         case let (.Move, indexFrom, indexTo) where indexPath != nil && newIndexPath != nil:
-            println("Cell update - Move - \(indexFrom!.row) - \(indexTo!.row)")
+            print("Cell update - Move - \(indexFrom!.row) - \(indexTo!.row)")
             if !self.tableView.editing{
                 self.tableView.moveRowAtIndexPath(indexFrom!, toIndexPath: indexTo!)
                 self.tableView.reloadRowsAtIndexPaths([indexTo!], withRowAnimation: .Fade)
             }
             
         case let (.Update, indexToUpdate, _) where indexPath != nil:
-            println("Cell update - Update - \(indexToUpdate!.row)")
+            print("Cell update - Update - \(indexToUpdate!.row)")
             if !self.tableView.editing {
                 self.tableView.reloadRowsAtIndexPaths([indexToUpdate!], withRowAnimation: .Fade)
             }
             
         case let (.Delete, indexToDelete, _) where indexPath != nil:
-            println("Cell update - Delete - \(indexToDelete!.row)")
+            print("Cell update - Delete - \(indexToDelete!.row)")
             self.tableView.deleteRowsAtIndexPaths([indexToDelete!], withRowAnimation: .Fade)
 
         default:
-            println("Error: Fail to find a proper change")
+            print("Error: Fail to find a proper change")
         }
     }
 }
@@ -299,18 +306,18 @@ extension ViewController: UIScrollViewDelegate {
         refreshViewLabel.text = "Pull down to create item"
         refreshViewLabel.textColor = UIColor.lightGrayColor()
         refreshViewLabel.textAlignment = .Center
-        refreshViewLabel.setTranslatesAutoresizingMaskIntoConstraints(false)
+        refreshViewLabel.translatesAutoresizingMaskIntoConstraints = false
 
         refreshView.addSubview(refreshViewLabel)
         
         let viewsDict = ["refreshViewLabel": refreshViewLabel]
         refreshView.addConstraints(
             NSLayoutConstraint.constraintsWithVisualFormat("V:|-10-[refreshViewLabel]-(>=0)-|",
-                options: nil, metrics: nil, views: viewsDict)
+                options: [], metrics: nil, views: viewsDict)
         )
         refreshView.addConstraints(
             NSLayoutConstraint.constraintsWithVisualFormat("H:|-[refreshViewLabel]-|",
-                options: nil, metrics: nil, views: viewsDict)
+                options: [], metrics: nil, views: viewsDict)
         )
         refreshView.layoutIfNeeded()
         
